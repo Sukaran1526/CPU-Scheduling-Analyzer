@@ -215,27 +215,34 @@ AlgoResult runFeedback(vector<Process> proc, int q1) {
 void getRecommendation(vector<AlgoResult>& results) {
     cout << string(65, '=') << "\n   INTELLIGENT RECOMMENDATION ENGINE (NORMALIZED SCORING)\n" << string(65, '=') << endl;
     
-    float minWT = FLT_MAX, maxWT = 0, minTAT = FLT_MAX, maxTAT = 0, minF = FLT_MAX, maxF = 0;
+    float minWT = FLT_MAX, maxWT = -1, minTAT = FLT_MAX, maxTAT = -1, minF = FLT_MAX, maxF = -1;
+    
+    // Find Min and Max for normalization
     for(auto r : results) {
-        minWT = min(minWT, r.avgWT); maxWT = max(maxWT, r.avgWT);
-        minTAT = min(minTAT, r.avgTAT); maxTAT = max(maxTAT, r.avgTAT);
-        minF = min(minF, r.fairness); maxF = max(maxF, r.fairness);
+        if(r.avgWT < minWT) minWT = r.avgWT; if(r.avgWT > maxWT) maxWT = r.avgWT;
+        if(r.avgTAT < minTAT) minTAT = r.avgTAT; if(r.avgTAT > maxTAT) maxTAT = r.avgTAT;
+        if(r.fairness < minF) minF = r.fairness; if(r.fairness > maxF) maxF = r.fairness;
     }
 
     float bestScore = FLT_MAX; string winner;
     for (auto& r : results) {
-        // Normalizing values between 0 and 1
+        // Normalizing values (Safety check to avoid division by zero)
         float nWT = (maxWT == minWT) ? 0 : (r.avgWT - minWT) / (maxWT - minWT);
         float nTAT = (maxTAT == minTAT) ? 0 : (r.avgTAT - minTAT) / (maxTAT - minTAT);
         float nF = (maxF == minF) ? 0 : (r.fairness - minF) / (maxF - minF);
 
+        // Efficiency (80%) vs Fairness (20%)
         r.score = (nWT * 0.5) + (nTAT * 0.3) + (nF * 0.2);
+        
         cout << left << setw(12) << r.name << " | Norm Score: " << fixed << setprecision(2) << r.score << " (Lower is Better)" << endl;
-        if (r.score < bestScore) { bestScore = r.score; winner = r.name; }
+        
+        if (r.score < bestScore) { 
+            bestScore = r.score; 
+            winner = r.name; 
+        }
     }
-    cout << "\n>>> RECOMMENDATION: " << winner << " is the most efficient and fair algorithm. <<<\n" << endl;
+    cout << "\n>>> RECOMMENDATION: " << winner << " is the most balanced algorithm for this workload. <<<\n" << endl;
 }
-
 int main() {
     int n, q;
     cout << "Enter number of processes: "; cin >> n;
